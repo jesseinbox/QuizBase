@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuizBase</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<header>
+  <h1>QuizBase</h1>
+  <span id="breadcrumb"></span>
+  <span id="fact-count"></span>
+  <div id="mode-toggle">
+    <button class="mode-btn active" id="btn-study">Facts</button>
+    <button class="mode-btn" id="btn-questions">Questions</button>
+    <button class="mode-btn" id="btn-quiz">Quiz</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── Panel 1: Topics ──────────────────────────────── -->
+  <section class="panel" id="panel-topics">
+    <div class="panel-header">
+      <h2>Topics</h2>
+      <div class="add-form">
+        <input type="text" id="new-topic-name" placeholder="New topic…" maxlength="120" />
+        <button class="btn btn-primary" id="add-topic-btn">+</button>
+      </div>
+    </div>
+    <div class="panel-list" id="topic-list"></div>
+  </section>
+
+  <!-- ── Panel 2: Courses ──────────────────────────────── -->
+  <section class="panel" id="panel-courses">
+    <div class="panel-header">
+      <h2>Courses <span class="panel-subtitle">optional tag</span></h2>
+      <div class="add-form">
+        <input type="text" id="new-course-name" placeholder="New course…" maxlength="120" />
+        <button class="btn btn-primary" id="add-course-btn">+</button>
+      </div>
+    </div>
+    <div class="panel-list" id="course-list"></div>
+  </section>
+
+  <!-- ── Panel 3: Facts ───────────────────────────────── -->
+  <section class="panel" id="panel-facts">
+    <div class="facts-add">
+      <h2>Facts</h2>
+      <textarea id="new-fact-content" placeholder="Type a fact… (Ctrl+Enter to save)" disabled></textarea>
+      <div class="facts-add-row">
+        <button class="btn btn-primary" id="add-fact-btn" disabled>Save Fact</button>
+      </div>
+    </div>
+    <div class="facts-list" id="facts-list">
+      <div class="empty-state">Select a topic first</div>
+    </div>
+  </section>
+
+</main>
+
+<div id="questions-panel" class="hidden">
+  <aside class="questions-sidebar">
+    <div class="qs-label">Topic</div>
+    <div class="questions-topic-list" id="questions-topic-list"></div>
+  </aside>
+  <section class="questions-content" id="questions-content">
+    <div class="quiz-placeholder">Select a topic to see its questions.</div>
+  </section>
+</div>
+
+<div id="quiz-panel" class="hidden">
+  <aside class="quiz-settings-pane">
+    <div class="qs-group">
+      <div class="qs-label">Category</div>
+      <div class="seg-ctrl" id="quiz-cat-ctrl">
+        <button class="seg-btn active" data-value="all">All</button>
+        <button class="seg-btn" data-value="topic">Topic</button>
+        <button class="seg-btn" data-value="course">Course</button>
+      </div>
+      <select id="quiz-filter-select" class="hidden quiz-select"></select>
+    </div>
+    <div class="qs-group">
+      <div class="qs-label">Type</div>
+      <div class="seg-ctrl" id="quiz-type-ctrl">
+        <button class="seg-btn active" data-value="true-false">True / False</button>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="start-quiz-btn">Start Quiz</button>
+  </aside>
+  <section class="quiz-content-pane" id="quiz-content">
+    <div class="quiz-placeholder">Configure settings and press Start Quiz.</div>
+  </section>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
