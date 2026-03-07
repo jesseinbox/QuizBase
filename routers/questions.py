@@ -42,6 +42,9 @@ async def list_questions(
         params.append(course_id)
     if due_only:
         conditions.append("(p.next_due_at IS NULL OR p.next_due_at <= datetime('now'))")
+        conditions.append(
+            "NOT EXISTS (SELECT 1 FROM flags fl WHERE fl.question_id = q.id AND fl.verdict = 'pending')"
+        )
     where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     cursor = await db.execute(f"""
         SELECT q.id, q.fact_id, q.statement, q.is_true,

@@ -670,7 +670,7 @@ function showFlagForm(card, questionId) {
     <div class="flag-form-title">Why are you flagging this question?</div>
     <div class="flag-options">
       <label class="flag-option"><input type="radio" name="flag-reason" value="wrong_answer" /> Wrong answer</label>
-      <label class="flag-option"><input type="radio" name="flag-reason" value="not_related" /> Not related to the covered facts</label>
+      <label class="flag-option"><input type="radio" name="flag-reason" value="not_related" /> Not covered</label>
       <label class="flag-option"><input type="radio" name="flag-reason" value="no_sense" /> Doesn't make sense</label>
       <label class="flag-option"><input type="radio" name="flag-reason" value="other" /> Other</label>
     </div>
