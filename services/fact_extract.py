@@ -35,8 +35,9 @@ FOCUS_INSTRUCTIONS = {
 }
 
 DEPTH_INSTRUCTIONS = {
-    "broad":    "Prefer facts that capture major concepts over fine-grained details.",
-    "specific": "Include specific details, statistics, named examples, and nuanced distinctions.",
+    "easy":   "Prefer clear, foundational facts that are straightforward to understand and test.",
+    "medium": "Mix foundational and more detailed facts — include some specifics but keep them accessible.",
+    "hard":   "Prefer complex, nuanced facts that require deeper understanding — include specific details, statistics, and subtle distinctions.",
 }
 
 EXTRACT_PROMPT = """\
@@ -79,11 +80,15 @@ def extract_pdf_text(pdf_bytes: bytes, start_page: int, end_page: int) -> tuple[
     # Clamp to valid range (convert to 0-indexed)
     first = max(0, start_page - 1)
     last = min(end_page, total)  # end_page is inclusive, range() is exclusive
+    MIN_WORDS = 50  # skip cover pages, dividers, image-heavy pages
     parts = []
+    pages_used = 0
     for i in range(first, last):
         page_text = reader.pages[i].extract_text() or ""
-        parts.append(page_text)
-    return "\n\n".join(parts), last - first, total
+        if len(page_text.split()) >= MIN_WORDS:
+            parts.append(page_text)
+            pages_used += 1
+    return "\n\n".join(parts), pages_used, total
 
 
 async def extract_facts(
@@ -96,7 +101,7 @@ async def extract_facts(
     client = _get_client()
 
     focus_label = FOCUS_LABELS.get(focus, FOCUS_LABELS["general"])
-    depth_label = "Broad overview" if depth == "broad" else "Specific details"
+    depth_label = {"easy": "Easy", "medium": "Medium", "hard": "Hard"}.get(depth, "Medium")
     focus_instruction = FOCUS_INSTRUCTIONS.get(focus, FOCUS_INSTRUCTIONS["general"])
     depth_instruction = DEPTH_INSTRUCTIONS.get(depth, DEPTH_INSTRUCTIONS["broad"])
 
@@ -116,8 +121,9 @@ async def extract_facts(
         dedup_instruction=dedup_instruction,
     )
 
+    model = "claude-haiku-4-5-20251001" if depth in ("easy", "medium") else "claude-sonnet-4-6"
     response = await client.messages.create(
-        model="claude-sonnet-4-6",
+        model=model,
         max_tokens=2048,
         messages=[{"role": "user", "content": prompt}],
     )

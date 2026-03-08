@@ -946,7 +946,7 @@ function showQuizResults() {
 
 /* ── PDF Import Modal ────────────────────────────────────── */
 const importState = {
-  depth: 'broad',
+  depth: 'easy',
   selectedFile: null,
 };
 
@@ -1005,6 +1005,20 @@ function updateExtractBtn() {
 }
 
 async function runExtraction() {
+  const startPage = parseInt(document.getElementById('start-page-input').value) || 1;
+  const endPage = parseInt(document.getElementById('end-page-input').value) || 20;
+  const pageRange = endPage - startPage + 1;
+
+  if (pageRange > 100) {
+    alert('The selected page range is more than 100 pages. Please upload a smaller file or narrow your page range.');
+    return;
+  }
+  if (pageRange > 25) {
+    if (!confirm(`The selected page range is ${pageRange} pages, which may take a moment and use more API credits. Continue?`)) {
+      return;
+    }
+  }
+
   const btn = document.getElementById('extract-btn');
   const resultsDiv = document.getElementById('extract-results');
 

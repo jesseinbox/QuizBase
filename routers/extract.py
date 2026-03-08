@@ -24,6 +24,9 @@ async def extract_from_pdf(
     topic_id: Optional[int] = Form(None),
     db=Depends(get_db),
 ):
+    if end_page - start_page + 1 > 100:
+        raise HTTPException(status_code=400, detail="Page range exceeds 100 pages. Please upload a smaller file or narrow your page range.")
+
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
 
