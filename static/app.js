@@ -1013,10 +1013,11 @@ async function runExtraction() {
 
   const formData = new FormData();
   formData.append('file', importState.selectedFile);
-  formData.append('max_facts', document.getElementById('max-facts-slider').value);
+  formData.append('max_facts', document.querySelector('#max-facts-ctrl .seg-btn.active').dataset.value);
   formData.append('focus', document.getElementById('focus-select').value);
   formData.append('depth', importState.depth);
-  formData.append('max_pages', document.getElementById('max-pages-input').value || 20);
+  formData.append('start_page', document.getElementById('start-page-input').value || 1);
+  formData.append('end_page', document.getElementById('end-page-input').value || 20);
   formData.append('avoid_duplicates', document.getElementById('avoid-dupes-check').checked ? 'true' : 'false');
   const topicId = document.getElementById('import-topic-select').value;
   if (topicId) formData.append('topic_id', topicId);
@@ -1175,8 +1176,11 @@ document.addEventListener("DOMContentLoaded", () => {
     updateExtractBtn();
   });
   document.getElementById('import-topic-select').addEventListener('change', updateExtractBtn);
-  document.getElementById('max-facts-slider').addEventListener('input', e => {
-    document.getElementById('max-facts-val').textContent = e.target.value;
+  document.getElementById('max-facts-ctrl').addEventListener('click', e => {
+    const btn = e.target.closest('.seg-btn');
+    if (!btn) return;
+    document.querySelectorAll('#max-facts-ctrl .seg-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
   });
   document.getElementById('depth-ctrl').addEventListener('click', e => {
     const btn = e.target.closest('.seg-btn');

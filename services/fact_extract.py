@@ -70,18 +70,20 @@ near-duplicates of them:
 {existing}"""
 
 
-def extract_pdf_text(pdf_bytes: bytes, max_pages: int) -> tuple[str, int, int]:
-    """Returns (text, pages_processed, total_pages). Raises on unreadable PDF."""
+def extract_pdf_text(pdf_bytes: bytes, start_page: int, end_page: int) -> tuple[str, int, int]:
+    """Returns (text, pages_processed, total_pages). Pages are 1-indexed. Raises on unreadable PDF."""
     import pypdf
 
     reader = pypdf.PdfReader(io.BytesIO(pdf_bytes))
     total = len(reader.pages)
-    limit = min(max_pages, total) if max_pages > 0 else total
+    # Clamp to valid range (convert to 0-indexed)
+    first = max(0, start_page - 1)
+    last = min(end_page, total)  # end_page is inclusive, range() is exclusive
     parts = []
-    for i in range(limit):
+    for i in range(first, last):
         page_text = reader.pages[i].extract_text() or ""
         parts.append(page_text)
-    return "\n\n".join(parts), limit, total
+    return "\n\n".join(parts), last - first, total
 
 
 async def extract_facts(

@@ -43,6 +43,7 @@ header h1 {
   border-radius: 12px;
   color: #90cdf4;
 }
+#fact-count:empty { display: none; }
 
 /* ── Main grid ───────────────────────────────────────────── */
 main {

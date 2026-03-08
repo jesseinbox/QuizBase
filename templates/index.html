@@ -148,9 +148,13 @@
 
         <div class="setting-row">
           <label class="setting-label">Max facts</label>
-          <div class="setting-control">
-            <input type="range" id="max-facts-slider" min="1" max="20" value="10" class="setting-slider" />
-            <span id="max-facts-val" class="setting-val">10</span>
+          <div class="seg-ctrl" id="max-facts-ctrl">
+            <button class="seg-btn" data-value="1">1</button>
+            <button class="seg-btn" data-value="3">3</button>
+            <button class="seg-btn" data-value="5">5</button>
+            <button class="seg-btn active" data-value="10">10</button>
+            <button class="seg-btn" data-value="25">25</button>
+            <button class="seg-btn" data-value="100">100</button>
           </div>
         </div>
 
@@ -175,10 +179,11 @@
         </div>
 
         <div class="setting-row">
-          <label class="setting-label">Max pages</label>
+          <label class="setting-label">Pages</label>
           <div class="setting-control">
-            <input type="number" id="max-pages-input" value="20" min="1" max="999" class="setting-num-input" />
-            <span class="setting-hint">controls token usage — increase for longer docs</span>
+            <input type="number" id="start-page-input" value="1" min="1" max="9999" class="setting-num-input" placeholder="Start" />
+            <span style="color:#a0aec0;font-size:0.85rem">to</span>
+            <input type="number" id="end-page-input" value="20" min="1" max="9999" class="setting-num-input" placeholder="End" />
           </div>
         </div>
 

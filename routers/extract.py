@@ -18,7 +18,8 @@ async def extract_from_pdf(
     max_facts: int = Form(10),
     focus: str = Form("general"),
     depth: str = Form("broad"),
-    max_pages: int = Form(20),
+    start_page: int = Form(1),
+    end_page: int = Form(20),
     avoid_duplicates: bool = Form(False),
     topic_id: Optional[int] = Form(None),
     db=Depends(get_db),
@@ -31,7 +32,7 @@ async def extract_from_pdf(
         raise HTTPException(status_code=400, detail="File too large (20 MB max).")
 
     try:
-        text, pages_processed, total_pages = extract_pdf_text(content, max_pages)
+        text, pages_processed, total_pages = extract_pdf_text(content, start_page, end_page)
     except Exception as exc:
         raise HTTPException(status_code=422, detail=f"Could not read PDF: {exc}")
 
