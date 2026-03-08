@@ -25,9 +25,9 @@ Given this fact:
 
 Use web search if helpful to verify accuracy or find closely related information.
 
-Generate exactly 5 true/false statements derived from this fact and directly related knowledge.
+Generate exactly 3 true/false statements derived from this fact and directly related knowledge.
 Rules:
-- Aim for roughly 2-3 true and 2-3 false statements (mix them up)
+- Aim for roughly 1-2 true and 1-2 false statements (mix them up)
 - False statements must be plausible but clearly wrong
 - Keep each statement to 1-2 sentences
 - Do NOT use phrases like "According to the fact…" — write standalone statements
@@ -159,4 +159,4 @@ async def _generate(fact_content: str) -> list[dict]:
     questions = json.loads(text)
     if not isinstance(questions, list) or len(questions) == 0:
         raise ValueError("Unexpected response shape")
-    return questions[:5]
+    return questions[:3]
