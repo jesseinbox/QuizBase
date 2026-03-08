@@ -130,6 +130,55 @@ async def generate_and_store_mc(fact_id: int, fact_content: str) -> None:
         print(f"[question_gen] MC generation failed for fact {fact_id}: {exc}")
 
 
+SA_PROMPT = """\
+You are a quiz question generator for a study app.
+
+Given this fact:
+"{fact}"
+
+Generate exactly 1 short-answer question that tests deep understanding of this fact.
+
+Requirements:
+- The question must require a substantive answer (explanation, examples, or description) — NOT a yes/no or one-word answer
+- Good question types: "What are examples of…", "Explain why…", "How does…", "Describe the…"
+- Bad question types: "Is X true?", "Does X do Y?", "What is the name of…"
+- Keep the question under 25 words
+- grading_notes: 1-2 sentences describing the key concepts or examples a correct answer should cover
+
+Respond with ONLY a JSON object, no markdown fences:
+{{
+  "statement": "...",
+  "grading_notes": "..."
+}}
+"""
+
+
+async def generate_and_store_sa(fact_id: int, fact_content: str) -> None:
+    """Generate 1 short-answer question for a fact and persist it."""
+    try:
+        client = _get_client()
+        response = await client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=512,
+            messages=[{"role": "user", "content": SA_PROMPT.format(fact=fact_content)}],
+        )
+        text = response.content[0].text.strip()
+        text = re.sub(r"^```[a-z]*\n?", "", text)
+        text = re.sub(r"\n?```$", "", text)
+        q = json.loads(text)
+
+        async with aiosqlite.connect(DB_PATH) as db:
+            await db.execute("PRAGMA foreign_keys = ON")
+            await db.execute(
+                "INSERT INTO questions (fact_id, statement, is_true, type, grading_notes) "
+                "VALUES (?, ?, 0, 'short_answer', ?)",
+                (fact_id, q["statement"], q.get("grading_notes", "")),
+            )
+            await db.commit()
+    except Exception as exc:
+        print(f"[question_gen] SA generation failed for fact {fact_id}: {exc}")
+
+
 async def _generate(fact_content: str) -> list[dict]:
     client = _get_client()
     response = await client.messages.create(

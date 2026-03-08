@@ -392,6 +392,7 @@ function buildFlagCard(flag) {
   const verdictClass = flag.verdict;
 
   const isMC = flag.type === "multiple_choice";
+  const isSA = flag.type === "short_answer";
   let questionHtml = "";
   if (isMC) {
     const letters = "ABCD";
@@ -405,6 +406,14 @@ function buildFlagCard(flag) {
         <span class="flag-verdict-badge ${verdictClass}">${verdictLabel[flag.verdict] || flag.verdict}</span>
       </div>
       <div class="flag-mc-options">${optsHtml}</div>
+    `;
+  } else if (isSA) {
+    questionHtml = `
+      <div class="flag-review-top">
+        <span class="question-badge sa">SA</span>
+        <span class="question-statement">${escHtml(flag.statement)}</span>
+        <span class="flag-verdict-badge ${verdictClass}">${verdictLabel[flag.verdict] || flag.verdict}</span>
+      </div>
     `;
   } else {
     const tf = Boolean(flag.is_true);
@@ -571,6 +580,12 @@ async function loadQuestions() {
           </div>
           <div class="mc-option-list">${optHtml}</div>
         `;
+      } else if (q.type === "short_answer") {
+        card.innerHTML = `
+          <span class="question-badge sa">SA</span>
+          <span class="question-statement">${escHtml(q.statement)}</span>
+          <span class="question-progress-badge ${dueBadgeClass(q)}">${dueBadgeText(q)}</span>
+        `;
       } else {
         card.innerHTML = `
           <span class="question-badge ${q.is_true ? 'true' : 'false'}">${q.is_true ? "True" : "False"}</span>
@@ -711,22 +726,35 @@ function showQuestion() {
     const shuffled = [...q.options].sort(() => Math.random() - 0.5);
     const letters = "ABCD";
     const optHtml = shuffled.map((opt, i) =>
-      `<button class="btn-mc-option" data-correct="${Boolean(opt.is_correct)}">${letters[i]}. ${escHtml(opt.option_text)}</button>`
+      `<button class="btn-mc-option quiz-answer-area" data-correct="${Boolean(opt.is_correct)}">${letters[i]}. ${escHtml(opt.option_text)}</button>`
     ).join("");
     card.innerHTML = `
       ${progressHeader}
       <div class="quiz-statement">${escHtml(q.statement)}</div>
-      <div class="mc-options">${optHtml}</div>
+      <div class="mc-options quiz-answer-area">${optHtml}</div>
     `;
     card.querySelectorAll(".btn-mc-option").forEach(btn => {
       btn.addEventListener("click", () => answerMC(btn, card, q));
     });
+  } else if (q.type === "short_answer") {
+    card.innerHTML = `
+      ${progressHeader}
+      <div class="quiz-statement">${escHtml(q.statement)}</div>
+      <div class="quiz-answer-row quiz-sa-area" style="flex-direction:column;gap:10px">
+        <textarea class="sa-answer-input" placeholder="Type your answer here…" rows="4"></textarea>
+        <button class="btn-sa-submit" disabled>Submit Answer</button>
+      </div>
+    `;
+    const ta = card.querySelector(".sa-answer-input");
+    const submitBtn = card.querySelector(".btn-sa-submit");
+    ta.addEventListener("input", () => { submitBtn.disabled = ta.value.trim().length === 0; });
+    submitBtn.addEventListener("click", () => answerSA(card, q));
   } else {
     const isTrue = Boolean(q.is_true);
     card.innerHTML = `
       ${progressHeader}
       <div class="quiz-statement">${escHtml(q.statement)}</div>
-      <div class="quiz-answer-row">
+      <div class="quiz-answer-row quiz-answer-area">
         <button class="btn-tf btn-tf-true" data-answer="true">True</button>
         <button class="btn-tf btn-tf-false" data-answer="false">False</button>
       </div>
@@ -801,9 +829,43 @@ async function answerQuestion(userSaysTrue, isTrue, questionId) {
 }
 
 
+async function answerSA(card, q) {
+  const ta = card.querySelector(".sa-answer-input");
+  const submitBtn = card.querySelector(".btn-sa-submit");
+  const answer = ta.value.trim();
+
+  ta.disabled = true;
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Grading…";
+
+  let result;
+  try {
+    result = await api("POST", `/questions/${q.id}/grade`, { answer });
+  } catch (err) {
+    submitBtn.textContent = "Submit Answer";
+    submitBtn.disabled = false;
+    ta.disabled = false;
+    return;
+  }
+
+  if (result.correct) quizScore++;
+
+  const feedback = document.createElement("div");
+  feedback.className = "quiz-feedback " + (result.correct ? "correct" : "wrong");
+  feedback.textContent = result.feedback;
+  submitBtn.replaceWith(feedback);
+
+  const nextBtn = document.createElement("button");
+  nextBtn.className = "btn-quiz-next";
+  nextBtn.textContent = quizIndex + 1 < quizQuestions.length ? "Next →" : "See Results";
+  nextBtn.addEventListener("click", () => { quizIndex++; showQuestion(); });
+  card.appendChild(nextBtn);
+}
+
 function showFlagForm(card, questionId) {
-  // Hide answer buttons, show flag form inline
-  card.querySelector(".quiz-answer-row").classList.add("hidden");
+  // Hide answer area, show flag form inline
+  const answerArea = card.querySelector(".quiz-answer-row, .mc-options");
+  if (answerArea) answerArea.classList.add("hidden");
 
   const form = document.createElement("div");
   form.className = "flag-form";
@@ -832,7 +894,7 @@ function showFlagForm(card, questionId) {
 
   form.querySelector(".btn-flag-cancel").addEventListener("click", () => {
     form.remove();
-    card.querySelector(".quiz-answer-row").classList.remove("hidden");
+    if (answerArea) answerArea.classList.remove("hidden");
   });
 
   form.querySelector(".btn-flag-submit").addEventListener("click", async () => {

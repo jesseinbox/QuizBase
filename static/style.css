@@ -712,7 +712,7 @@ main {
   text-align: left;
   padding: 10px 14px;
   background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px;
-  font-size: 0.875rem; font-family: inherit; color: #2d3748;
+  font-size: 0.8rem; font-family: inherit; color: #2d3748;
   cursor: pointer; line-height: 1.5;
   transition: background 0.15s, border-color 0.15s;
 }
@@ -733,6 +733,39 @@ main {
 }
 .mc-option-item.mc-correct-opt { color: #276749; font-weight: 600; }
 .question-badge.mc { background: #e9d8fd; color: #553c9a; }
+.question-badge.sa { background: #fbd38d; color: #744210; }
+
+/* ── Short answer input ──────────────────────────────────── */
+.sa-answer-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  line-height: 1.55;
+  resize: vertical;
+  min-height: 100px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.sa-answer-input:focus { border-color: #63b3ed; }
+.sa-answer-input:disabled { background: #f7fafc; color: #718096; }
+
+.btn-sa-submit {
+  align-self: flex-end;
+  padding: 9px 24px;
+  background: #4299e1;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.btn-sa-submit:hover:not(:disabled) { background: #3182ce; }
+.btn-sa-submit:disabled { opacity: 0.4; cursor: default; }
 
 /* ── Flag button & form ──────────────────────────────────── */
 .btn-flag {

@@ -3,7 +3,8 @@ from typing import Optional
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel
 from database import get_db
-from services.question_gen import generate_and_store_mc
+from services.question_gen import generate_and_store_mc, generate_and_store_sa
+from services.question_grade import grade_short_answer
 from services.flag_expiry import auto_resolve_expired_flags
 
 router = APIRouter(prefix="/api/questions", tags=["questions"])
@@ -127,12 +128,70 @@ async def record_answer(
     """, (question_id, new_count, due_str, new_count, due_str))
     await db.commit()
 
-    # On first correct answer to a T/F question, generate an MC question for the same fact
-    if prev_count == 0 and q_row["type"] == "true_false":
+    if prev_count == 0:
         fact = await (await db.execute(
             "SELECT content FROM facts WHERE id = ?", (q_row["fact_id"],)
         )).fetchone()
         if fact:
-            background_tasks.add_task(generate_and_store_mc, q_row["fact_id"], fact["content"])
+            # First correct T/F → generate MC
+            if q_row["type"] == "true_false":
+                background_tasks.add_task(generate_and_store_mc, q_row["fact_id"], fact["content"])
+            # First correct MC → generate SA
+            elif q_row["type"] == "multiple_choice":
+                background_tasks.add_task(generate_and_store_sa, q_row["fact_id"], fact["content"])
 
     return {"correct_count": new_count, "next_due_at": due_str, "interval_days": days}
+
+
+class GradeBody(BaseModel):
+    answer: str
+
+
+@router.post("/{question_id}/grade")
+async def grade_answer(
+    question_id: int,
+    body: GradeBody,
+    db=Depends(get_db),
+):
+    q_row = await (await db.execute(
+        "SELECT id, fact_id, statement, grading_notes, COALESCE(type, 'true_false') AS type "
+        "FROM questions WHERE id = ?",
+        (question_id,)
+    )).fetchone()
+    if not q_row:
+        raise HTTPException(status_code=404, detail="Question not found")
+    if q_row["type"] != "short_answer":
+        raise HTTPException(status_code=400, detail="Not a short answer question")
+
+    fact = await (await db.execute(
+        "SELECT content FROM facts WHERE id = ?", (q_row["fact_id"],)
+    )).fetchone()
+
+    result = await grade_short_answer(
+        q_row["statement"],
+        fact["content"] if fact else "",
+        q_row["grading_notes"] or "",
+        body.answer,
+    )
+
+    if result.get("correct"):
+        prog = await (await db.execute(
+            "SELECT correct_count FROM question_progress WHERE question_id = ?", (question_id,)
+        )).fetchone()
+        prev_count = prog["correct_count"] if prog else 0
+        new_count = prev_count + 1
+        due_str, days = _next_due(new_count)
+        await db.execute("""
+            INSERT INTO question_progress (question_id, correct_count, next_due_at, last_answered_at)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(question_id) DO UPDATE SET
+                correct_count    = ?,
+                next_due_at      = ?,
+                last_answered_at = CURRENT_TIMESTAMP,
+                updated_at       = CURRENT_TIMESTAMP
+        """, (question_id, new_count, due_str, new_count, due_str))
+        await db.commit()
+        result["correct_count"] = new_count
+        result["next_due_at"] = due_str
+
+    return result

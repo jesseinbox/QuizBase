@@ -93,6 +93,11 @@ async def init_db():
             await db.execute("ALTER TABLE flags ADD COLUMN verdict_explanation TEXT")
         except Exception:
             pass
+        # Add grading_notes to questions for short-answer type (no-op if already present)
+        try:
+            await db.execute("ALTER TABLE questions ADD COLUMN grading_notes TEXT")
+        except Exception:
+            pass
         await db.execute(CREATE_FLAGS)
         await db.commit()
 
