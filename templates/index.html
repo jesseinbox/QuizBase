@@ -48,7 +48,7 @@
   <!-- ── Panel 3: Facts ───────────────────────────────── -->
   <section class="panel" id="panel-facts">
     <div class="facts-add">
-      <h2>Facts</h2>
+      <h2>Facts <button class="btn-import-pdf" id="import-pdf-btn">Import PDF</button></h2>
       <textarea id="new-fact-content" placeholder="Type a fact… (Ctrl+Enter to save)" disabled></textarea>
       <div class="facts-add-row">
         <button class="btn btn-primary" id="add-fact-btn" disabled>Save Fact</button>
@@ -102,6 +102,115 @@
   <section class="quiz-content-pane" id="quiz-content">
     <div class="quiz-placeholder">Configure settings and press Start Quiz.</div>
   </section>
+</div>
+
+<!-- ── PDF Import Modal ──────────────────────────────────── -->
+<div id="import-modal" class="modal-overlay hidden">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h3 class="modal-title">Import from PDF</h3>
+      <button class="modal-close" id="modal-close-btn">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- File -->
+      <div class="import-section">
+        <div class="import-label">PDF File</div>
+        <div class="file-pick-row">
+          <label class="btn-file-pick" for="pdf-file-input">Choose PDF…</label>
+          <input type="file" id="pdf-file-input" accept=".pdf" />
+          <span id="pdf-filename" class="file-name-display">No file selected</span>
+        </div>
+      </div>
+
+      <!-- Destination -->
+      <div class="import-section">
+        <div class="import-label">Destination</div>
+        <div class="import-row">
+          <div class="import-field">
+            <label class="import-field-label">Topic</label>
+            <select id="import-topic-select" class="import-select">
+              <option value="">— select topic —</option>
+            </select>
+          </div>
+          <div class="import-field">
+            <label class="import-field-label">Course <span class="panel-subtitle">optional</span></label>
+            <select id="import-course-select" class="import-select">
+              <option value="">None</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="import-section">
+        <div class="import-label">Extraction Settings</div>
+
+        <div class="setting-row">
+          <label class="setting-label">Max facts</label>
+          <div class="setting-control">
+            <input type="range" id="max-facts-slider" min="1" max="20" value="10" class="setting-slider" />
+            <span id="max-facts-val" class="setting-val">10</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <label class="setting-label">Focus</label>
+          <select id="focus-select" class="import-select">
+            <option value="general">General</option>
+            <option value="theoretical">Theoretical Concepts</option>
+            <option value="scientific">Scientific &amp; Technical</option>
+            <option value="historical">Historical Facts</option>
+            <option value="definitions">Key Definitions</option>
+            <option value="processes">Processes &amp; How-It-Works</option>
+          </select>
+        </div>
+
+        <div class="setting-row">
+          <label class="setting-label">Specificity</label>
+          <div class="seg-ctrl" id="depth-ctrl">
+            <button class="seg-btn active" data-value="broad">Broad overview</button>
+            <button class="seg-btn" data-value="specific">Specific details</button>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <label class="setting-label">Max pages</label>
+          <div class="setting-control">
+            <input type="number" id="max-pages-input" value="20" min="1" max="999" class="setting-num-input" />
+            <span class="setting-hint">controls token usage — increase for longer docs</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <label class="setting-label">Avoid duplicates</label>
+          <label class="toggle-label">
+            <input type="checkbox" id="avoid-dupes-check" />
+            <span>Skip facts already in the selected topic</span>
+          </label>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-extract" id="extract-btn" disabled>Extract Facts</button>
+
+      <!-- Results -->
+      <div id="extract-results" class="hidden">
+        <div class="results-header">
+          <div class="import-label" id="results-label">Extracted Facts</div>
+          <span class="results-meta" id="results-meta"></span>
+        </div>
+        <div id="extracted-facts-list" class="extracted-facts-list"></div>
+        <div class="import-actions">
+          <div class="select-toggles">
+            <button class="btn-text-action" id="select-all-btn">All</button>
+            <button class="btn-text-action" id="select-none-btn">None</button>
+          </div>
+          <button class="btn btn-primary" id="import-btn" disabled>Import Selected</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 
 <script src="/static/app.js"></script>

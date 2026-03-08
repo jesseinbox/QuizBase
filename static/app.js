@@ -944,6 +944,181 @@ function showQuizResults() {
   content.appendChild(card);
 }
 
+/* ── PDF Import Modal ────────────────────────────────────── */
+const importState = {
+  depth: 'broad',
+  selectedFile: null,
+};
+
+function openImportModal() {
+  const modal = document.getElementById('import-modal');
+  modal.classList.remove('hidden');
+  populateImportDropdowns();
+}
+
+function closeImportModal() {
+  document.getElementById('import-modal').classList.add('hidden');
+  document.getElementById('extract-results').classList.add('hidden');
+  document.getElementById('extracted-facts-list').innerHTML = '';
+  document.getElementById('pdf-file-input').value = '';
+  document.getElementById('pdf-filename').textContent = 'No file selected';
+  document.getElementById('extract-btn').disabled = true;
+  document.getElementById('import-btn').disabled = true;
+  importState.selectedFile = null;
+}
+
+async function populateImportDropdowns() {
+  const topicSel = document.getElementById('import-topic-select');
+  const courseSel = document.getElementById('import-course-select');
+
+  const [topics, courses] = await Promise.all([
+    api('GET', '/topics'),
+    api('GET', '/courses'),
+  ]);
+
+  topicSel.innerHTML = '<option value="">— select topic —</option>';
+  for (const t of topics) {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.name;
+    // Pre-select the currently active topic if any
+    if (t.id === state.activeTopicId) opt.selected = true;
+    topicSel.appendChild(opt);
+  }
+
+  courseSel.innerHTML = '<option value="">None</option>';
+  for (const c of courses) {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    if (c.id === state.activeCourseId) opt.selected = true;
+    courseSel.appendChild(opt);
+  }
+
+  updateExtractBtn();
+}
+
+function updateExtractBtn() {
+  const hasFile = !!importState.selectedFile;
+  const hasTopic = !!document.getElementById('import-topic-select').value;
+  document.getElementById('extract-btn').disabled = !(hasFile && hasTopic);
+}
+
+async function runExtraction() {
+  const btn = document.getElementById('extract-btn');
+  const resultsDiv = document.getElementById('extract-results');
+
+  btn.disabled = true;
+  btn.textContent = 'Extracting…';
+
+  const formData = new FormData();
+  formData.append('file', importState.selectedFile);
+  formData.append('max_facts', document.getElementById('max-facts-slider').value);
+  formData.append('focus', document.getElementById('focus-select').value);
+  formData.append('depth', importState.depth);
+  formData.append('max_pages', document.getElementById('max-pages-input').value || 20);
+  formData.append('avoid_duplicates', document.getElementById('avoid-dupes-check').checked ? 'true' : 'false');
+  const topicId = document.getElementById('import-topic-select').value;
+  if (topicId) formData.append('topic_id', topicId);
+
+  let data;
+  try {
+    const res = await fetch('/api/extract/pdf', { method: 'POST', body: formData });
+    data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Extraction failed');
+  } catch (err) {
+    alert('Error: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Extract Facts';
+    return;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Extract Facts';
+
+  const { facts, pages_processed, total_pages } = data;
+  document.getElementById('results-label').textContent =
+    `${facts.length} fact${facts.length !== 1 ? 's' : ''} extracted`;
+  document.getElementById('results-meta').textContent =
+    `${pages_processed} of ${total_pages} page${total_pages !== 1 ? 's' : ''} processed`;
+
+  const list = document.getElementById('extracted-facts-list');
+  list.innerHTML = '';
+  for (const fact of facts) {
+    list.appendChild(buildExtractedFactItem(fact));
+  }
+
+  updateImportBtn();
+  resultsDiv.classList.remove('hidden');
+}
+
+function buildExtractedFactItem(text) {
+  const item = document.createElement('div');
+  item.className = 'extracted-fact-item';
+  item.innerHTML = `
+    <input type="checkbox" class="fact-check" checked />
+    <textarea class="fact-text" rows="1">${escHtml(text)}</textarea>
+  `;
+  // Auto-resize textarea to fit content
+  const ta = item.querySelector('.fact-text');
+  ta.addEventListener('input', () => autoResize(ta));
+  requestAnimationFrame(() => autoResize(ta));
+
+  item.querySelector('.fact-check').addEventListener('change', updateImportBtn);
+  return item;
+}
+
+function autoResize(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = ta.scrollHeight + 'px';
+}
+
+function updateImportBtn() {
+  const checked = document.querySelectorAll('.fact-check:checked').length;
+  const btn = document.getElementById('import-btn');
+  btn.disabled = checked === 0;
+  btn.textContent = checked ? `Import ${checked} Fact${checked !== 1 ? 's' : ''}` : 'Import Selected';
+}
+
+async function runImport() {
+  const btn = document.getElementById('import-btn');
+  btn.disabled = true;
+  btn.textContent = 'Importing…';
+
+  const items = document.querySelectorAll('.extracted-fact-item');
+  const facts = [];
+  items.forEach(item => {
+    if (item.querySelector('.fact-check').checked) {
+      facts.push(item.querySelector('.fact-text').value.trim());
+    }
+  });
+
+  const topicId = Number(document.getElementById('import-topic-select').value);
+  const courseVal = document.getElementById('import-course-select').value;
+  const courseId = courseVal ? Number(courseVal) : null;
+
+  try {
+    const result = await api('POST', '/extract/import', { topic_id: topicId, course_id: courseId, facts });
+    closeImportModal();
+    // Refresh facts if the imported topic is currently active
+    if (topicId === state.activeTopicId) {
+      const updatedFacts = await api('GET', `/topics/${topicId}/facts`);
+      renderFacts(updatedFacts);
+      await renderTopics();
+    }
+    // Brief confirmation
+    const notice = document.createElement('div');
+    notice.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#48bb78;color:#fff;padding:10px 18px;border-radius:8px;font-size:0.85rem;font-weight:600;z-index:2000;box-shadow:0 2px 10px rgba(0,0,0,0.15)';
+    notice.textContent = `${result.added} fact${result.added !== 1 ? 's' : ''} imported — questions generating in background`;
+    document.body.appendChild(notice);
+    setTimeout(() => notice.remove(), 4000);
+  } catch (err) {
+    alert('Import failed: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = `Import ${facts.length} Facts`;
+  }
+}
+
 /* ── Bootstrap ───────────────────────────────────────────── */
 document.addEventListener("DOMContentLoaded", () => {
   // Topic add
@@ -986,6 +1161,41 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("quiz-filter-select").addEventListener("change", e => {
     quizState.filterId = e.target.value ? Number(e.target.value) : null;
   });
+
+  // PDF Import Modal
+  document.getElementById('import-pdf-btn').addEventListener('click', openImportModal);
+  document.getElementById('modal-close-btn').addEventListener('click', closeImportModal);
+  document.getElementById('import-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('import-modal')) closeImportModal();
+  });
+  document.getElementById('pdf-file-input').addEventListener('change', e => {
+    importState.selectedFile = e.target.files[0] || null;
+    document.getElementById('pdf-filename').textContent =
+      importState.selectedFile ? importState.selectedFile.name : 'No file selected';
+    updateExtractBtn();
+  });
+  document.getElementById('import-topic-select').addEventListener('change', updateExtractBtn);
+  document.getElementById('max-facts-slider').addEventListener('input', e => {
+    document.getElementById('max-facts-val').textContent = e.target.value;
+  });
+  document.getElementById('depth-ctrl').addEventListener('click', e => {
+    const btn = e.target.closest('.seg-btn');
+    if (!btn) return;
+    importState.depth = btn.dataset.value;
+    document.querySelectorAll('#depth-ctrl .seg-btn').forEach(b =>
+      b.classList.toggle('active', b === btn)
+    );
+  });
+  document.getElementById('extract-btn').addEventListener('click', runExtraction);
+  document.getElementById('select-all-btn').addEventListener('click', () => {
+    document.querySelectorAll('.fact-check').forEach(cb => { cb.checked = true; });
+    updateImportBtn();
+  });
+  document.getElementById('select-none-btn').addEventListener('click', () => {
+    document.querySelectorAll('.fact-check').forEach(cb => { cb.checked = false; });
+    updateImportBtn();
+  });
+  document.getElementById('import-btn').addEventListener('click', runImport);
 
   // Initial state
   enableFactInput(false);

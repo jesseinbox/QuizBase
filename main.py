@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from database import init_db
-from routers import courses, topics, facts, questions, flags
+from routers import courses, topics, facts, questions, flags, extract
 
 app = FastAPI(title="QuizBase")
 
@@ -19,6 +19,7 @@ app.include_router(topics.router)
 app.include_router(facts.router)
 app.include_router(questions.router)
 app.include_router(flags.router)
+app.include_router(extract.router)
 
 
 @app.on_event("startup")

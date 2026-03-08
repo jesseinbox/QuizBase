@@ -735,6 +735,178 @@ main {
 .question-badge.mc { background: #e9d8fd; color: #553c9a; }
 .question-badge.sa { background: #fbd38d; color: #744210; }
 
+/* ── Import PDF button (in Facts header) ─────────────────── */
+.btn-import-pdf {
+  font-size: 0.68rem; font-weight: 700;
+  padding: 3px 9px;
+  background: #ebf8ff; color: #2b6cb0;
+  border: 1px solid #bee3f8; border-radius: 5px;
+  cursor: pointer; margin-left: 8px;
+  transition: background 0.15s;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.btn-import-pdf:hover { background: #bee3f8; }
+
+/* ── Modal overlay ───────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex; align-items: flex-start; justify-content: center;
+  padding: 40px 16px 24px;
+  overflow-y: auto;
+}
+.modal-panel {
+  background: #fff; border-radius: 12px;
+  width: 100%; max-width: 580px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+.modal-title {
+  font-size: 1rem; font-weight: 700; color: #1a202c;
+}
+.modal-close {
+  background: none; border: none; font-size: 1rem;
+  color: #a0aec0; cursor: pointer; padding: 2px 6px; border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+.modal-close:hover { color: #4a5568; background: #f7fafc; }
+.modal-body {
+  padding: 20px 24px 24px;
+  display: flex; flex-direction: column; gap: 20px;
+  overflow-y: auto;
+}
+
+/* ── Import sections ─────────────────────────────────────── */
+.import-section {
+  display: flex; flex-direction: column; gap: 10px;
+}
+.import-label {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: #718096;
+}
+.import-row {
+  display: flex; gap: 12px;
+}
+.import-field {
+  display: flex; flex-direction: column; gap: 4px; flex: 1;
+}
+.import-field-label {
+  font-size: 0.75rem; font-weight: 600; color: #4a5568;
+}
+.import-select {
+  padding: 7px 10px; border: 1px solid #cbd5e0; border-radius: 7px;
+  font-size: 0.85rem; font-family: inherit; outline: none;
+  background: #fff; transition: border-color 0.15s;
+}
+.import-select:focus { border-color: #63b3ed; }
+.file-pick-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.btn-file-pick {
+  display: inline-block;
+  padding: 6px 14px;
+  background: #edf2f7; color: #4a5568;
+  border: 1px solid #cbd5e0; border-radius: 7px;
+  font-size: 0.82rem; font-weight: 600; cursor: pointer;
+  transition: background 0.15s; white-space: nowrap;
+}
+.btn-file-pick:hover { background: #e2e8f0; }
+#pdf-file-input { display: none; }
+.file-name-display {
+  font-size: 0.82rem; color: #718096; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; max-width: 240px;
+}
+
+/* ── Extraction settings ─────────────────────────────────── */
+.setting-row {
+  display: flex; align-items: center; gap: 12px; min-height: 32px;
+}
+.setting-label {
+  font-size: 0.82rem; font-weight: 600; color: #4a5568;
+  min-width: 100px; flex-shrink: 0;
+}
+.setting-control {
+  display: flex; align-items: center; gap: 10px; flex: 1;
+}
+.setting-slider {
+  flex: 1; accent-color: #4299e1;
+}
+.setting-val {
+  font-size: 0.85rem; font-weight: 700; color: #2b6cb0;
+  min-width: 22px; text-align: center;
+}
+.setting-num-input {
+  width: 70px; padding: 5px 8px;
+  border: 1px solid #cbd5e0; border-radius: 6px;
+  font-size: 0.85rem; outline: none;
+}
+.setting-num-input:focus { border-color: #63b3ed; }
+.setting-hint {
+  font-size: 0.75rem; color: #a0aec0; line-height: 1.4;
+}
+.toggle-label {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 0.82rem; color: #4a5568; cursor: pointer;
+}
+.toggle-label input { cursor: pointer; }
+
+.btn-extract {
+  align-self: flex-start;
+  padding: 8px 22px;
+}
+
+/* ── Extracted facts results ─────────────────────────────── */
+.results-header {
+  display: flex; align-items: baseline; gap: 10px;
+  border-top: 1px solid #e2e8f0; padding-top: 18px;
+}
+.results-meta {
+  font-size: 0.75rem; color: #a0aec0;
+}
+.extracted-facts-list {
+  display: flex; flex-direction: column; gap: 6px;
+  margin-top: 6px;
+}
+.extracted-fact-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0; border-radius: 8px;
+  background: #f7fafc;
+  transition: background 0.1s;
+}
+.extracted-fact-item:has(.fact-check:checked) { background: #fff; }
+.fact-check { margin-top: 3px; flex-shrink: 0; cursor: pointer; accent-color: #4299e1; }
+.fact-text {
+  flex: 1; font-size: 0.85rem; line-height: 1.55; color: #2d3748;
+  border: none; background: transparent; padding: 0; font-family: inherit;
+  resize: none; outline: none; min-height: 1.55em; overflow: hidden;
+  cursor: text;
+}
+.fact-text:focus { outline: 1px solid #bee3f8; border-radius: 3px; }
+.import-actions {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 12px;
+}
+.select-toggles {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 0.75rem; color: #a0aec0;
+}
+.select-toggles::before { content: "Select:"; margin-right: 4px; }
+.btn-text-action {
+  background: none; border: none; font-size: 0.75rem; font-weight: 600;
+  color: #4299e1; cursor: pointer; padding: 1px 4px; border-radius: 3px;
+  transition: background 0.15s;
+}
+.btn-text-action:hover { background: #ebf8ff; }
+
 /* ── Short answer input ──────────────────────────────────── */
 .sa-answer-input {
   width: 100%;
