@@ -73,8 +73,8 @@ Generate exactly 1 multiple choice question based on this fact. It should be the
 same difficulty or harder than a basic true/false question on the topic.
 
 Requirements:
-- A clear question prompt (1-2 sentences)
-- Exactly 4 answer options
+- A clear question prompt (1-2 sentences), ideally under 20 words. If a draft exceeds 20 words, try to tighten it before using it — but include it if shortening would sacrifice clarity.
+- Exactly 4 answer options, each ideally under 15 words. If a draft option exceeds 15 words, try to condense it first — but use the longer version if necessary for accuracy.
 - Exactly 1 correct answer
 - 3 plausible but clearly incorrect distractors
 - Do not make the correct answer obvious by position or length
