@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from database import get_db
 from services.fact_extract import extract_facts, extract_pdf_text
 from services.question_gen import generate_and_store
+from services.fact_check import check_and_flag_fact
 
 router = APIRouter(prefix="/api/extract", tags=["extract"])
 
@@ -95,6 +96,7 @@ async def import_facts(
         )
         fact_id = cursor.lastrowid
         background_tasks.add_task(generate_and_store, fact_id, content)
+        background_tasks.add_task(check_and_flag_fact, fact_id, content)
         added += 1
 
     await db.commit()

@@ -736,6 +736,51 @@ main {
 .question-badge.mc { background: #e9d8fd; color: #553c9a; }
 .question-badge.sa { background: #fbd38d; color: #744210; }
 
+/* ── Flagged facts topic item ────────────────────────────── */
+.flagged-facts-topic-item {
+  display: flex; align-items: center;
+  padding: 9px 14px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 4px;
+  gap: 6px;
+  transition: background 0.1s;
+}
+.flagged-facts-topic-item:hover { background: #fff5f5; }
+.flagged-facts-topic-item.active {
+  background: #fff5f5; border-left-color: #fc8181;
+}
+.flagged-facts-topic-item .list-item-name {
+  flex: 1; font-size: 0.875rem; color: #c53030; font-weight: 600;
+}
+.flagged-badge {
+  background: #fed7d7 !important; color: #9b2c2c !important;
+}
+
+/* ── Flagged fact card ────────────────────────────────────── */
+.fact-card.fact-flagged {
+  border-color: #fc8181; background: #fff5f5;
+}
+.fact-flag-warning {
+  display: flex; align-items: flex-start; gap: 6px;
+  background: #fed7d7; border-radius: 6px;
+  padding: 8px 10px; font-size: 0.8rem; color: #9b2c2c; line-height: 1.45;
+}
+.fact-flag-icon { flex-shrink: 0; font-size: 0.85rem; }
+.fact-flag-topic {
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: #b7791f; margin-bottom: 2px;
+}
+.btn-dismiss-flag {
+  background: #f0fff4; color: #276749;
+  font-size: 0.78rem; padding: 4px 10px;
+  border-radius: 5px; border: 1px solid #9ae6b4;
+  cursor: pointer; font-weight: 600;
+  transition: background 0.15s;
+}
+.btn-dismiss-flag:hover { background: #c6f6d5; }
+
 /* ── Import PDF button (in Facts header) ─────────────────── */
 .btn-import-pdf {
   font-size: 0.68rem; font-weight: 700;

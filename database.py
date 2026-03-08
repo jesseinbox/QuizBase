@@ -98,6 +98,11 @@ async def init_db():
             await db.execute("ALTER TABLE questions ADD COLUMN grading_notes TEXT")
         except Exception:
             pass
+        # Add accuracy_flag to facts for fact-checking (no-op if already present)
+        try:
+            await db.execute("ALTER TABLE facts ADD COLUMN accuracy_flag TEXT")
+        except Exception:
+            pass
         await db.execute(CREATE_FLAGS)
         await db.commit()
 

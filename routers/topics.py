@@ -2,6 +2,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from database import get_db
 from models import TopicCreate, FactCreate
 from services.question_gen import generate_and_store
+from services.fact_check import check_and_flag_fact
 
 router = APIRouter(prefix="/api/topics", tags=["topics"])
 
@@ -58,7 +59,7 @@ async def list_facts(topic_id: int, db=Depends(get_db)):
         raise HTTPException(status_code=404, detail="Topic not found")
     cursor = await db.execute("""
         SELECT f.id, f.topic_id, f.course_id, f.content, f.created_at, f.updated_at,
-               c.name AS course_name
+               f.accuracy_flag, c.name AS course_name
         FROM facts f
         LEFT JOIN courses c ON c.id = f.course_id
         WHERE f.topic_id = ?
@@ -86,11 +87,12 @@ async def create_fact(topic_id: int, body: FactCreate, background_tasks: Backgro
     fact_id = cursor.lastrowid
     row = await (await db.execute("""
         SELECT f.id, f.topic_id, f.course_id, f.content, f.created_at, f.updated_at,
-               c.name AS course_name
+               f.accuracy_flag, c.name AS course_name
         FROM facts f
         LEFT JOIN courses c ON c.id = f.course_id
         WHERE f.id = ?
     """, (fact_id,))).fetchone()
     fact = dict(row)
     background_tasks.add_task(generate_and_store, fact_id, fact["content"])
+    background_tasks.add_task(check_and_flag_fact, fact_id, fact["content"])
     return fact

@@ -106,6 +106,8 @@ async function deleteTopic(id) {
 }
 
 async function selectTopic(id) {
+  viewingFlaggedFacts = false;
+  document.getElementById("flagged-facts-item").classList.remove("active");
   state.activeTopicId = id;
   await renderTopics();
   const facts = await api("GET", `/topics/${id}/facts`);
@@ -205,14 +207,32 @@ function buildFactCard(fact) {
     ? `<span class="course-badge">${escHtml(fact.course_name)}</span>`
     : "";
 
+  const flagHtml = fact.accuracy_flag
+    ? `<div class="fact-flag-warning"><span class="fact-flag-icon">⚠</span><span>${escHtml(fact.accuracy_flag)}</span></div>`
+    : "";
+
+  if (fact.accuracy_flag) card.classList.add("fact-flagged");
+
   card.innerHTML = `
     <div class="fact-card-content">${escHtml(fact.content)}</div>
     ${badgeHtml}
+    ${flagHtml}
     <div class="fact-card-actions">
+      ${fact.accuracy_flag ? '<button class="btn-dismiss-flag">Dismiss</button>' : ""}
       <button class="btn-edit">Edit</button>
       <button class="btn-delete-fact">Delete</button>
     </div>
   `;
+
+  if (fact.accuracy_flag) {
+    card.querySelector(".btn-dismiss-flag").addEventListener("click", async () => {
+      await api("POST", `/facts/${fact.id}/dismiss-flag`);
+      fact.accuracy_flag = null;
+      const newCard = buildFactCard(fact);
+      card.replaceWith(newCard);
+      await refreshFlaggedItem();
+    });
+  }
 
   card.querySelector(".btn-edit").addEventListener("click", () => startEditFact(card, fact));
   card.querySelector(".btn-delete-fact").addEventListener("click", (e) => {
@@ -944,6 +964,97 @@ function showQuizResults() {
   content.appendChild(card);
 }
 
+/* ── Flagged facts ───────────────────────────────────────── */
+let viewingFlaggedFacts = false;
+
+async function refreshFlaggedItem() {
+  const facts = await api("GET", "/facts/flagged");
+  const item = document.getElementById("flagged-facts-item");
+  const badge = document.getElementById("flagged-facts-count");
+  if (facts.length > 0) {
+    badge.textContent = facts.length;
+    item.classList.remove("hidden");
+  } else {
+    item.classList.add("hidden");
+    if (viewingFlaggedFacts) {
+      viewingFlaggedFacts = false;
+      item.classList.remove("active");
+      renderFacts([]);
+      enableFactInput(false);
+    }
+  }
+}
+
+async function showFlaggedFacts() {
+  viewingFlaggedFacts = true;
+  // Deselect any active topic
+  state.activeTopicId = null;
+  document.querySelectorAll("#topic-list .list-item.active").forEach(el => el.classList.remove("active"));
+  document.getElementById("flagged-facts-item").classList.add("active");
+
+  const facts = await api("GET", "/facts/flagged");
+  const list = document.getElementById("facts-list");
+  list.innerHTML = "";
+  enableFactInput(false);
+
+  if (!facts.length) {
+    list.innerHTML = '<div class="empty-state">No flagged facts</div>';
+    return;
+  }
+
+  for (const f of facts) {
+    list.appendChild(buildFlaggedFactCard(f));
+  }
+
+  const fc = document.getElementById("fact-count");
+  fc.textContent = "";
+  document.getElementById("breadcrumb").textContent = "Flagged Facts";
+}
+
+function buildFlaggedFactCard(fact) {
+  const card = document.createElement("div");
+  card.className = "fact-card fact-flagged";
+  card.dataset.factId = fact.id;
+
+  card.innerHTML = `
+    <div class="fact-flag-topic">${escHtml(fact.topic_name || "")}</div>
+    <div class="fact-card-content">${escHtml(fact.content)}</div>
+    <div class="fact-flag-warning">
+      <span class="fact-flag-icon">⚠</span>
+      <span>${escHtml(fact.accuracy_flag)}</span>
+    </div>
+    <div class="fact-card-actions">
+      <button class="btn-dismiss-flag">Dismiss</button>
+      <button class="btn-delete-fact">Delete</button>
+    </div>
+  `;
+
+  card.querySelector(".btn-dismiss-flag").addEventListener("click", async () => {
+    await api("POST", `/facts/${fact.id}/dismiss-flag`);
+    card.remove();
+    await refreshFlaggedItem();
+    if (!document.querySelector(".fact-card")) {
+      document.getElementById("facts-list").innerHTML =
+        '<div class="empty-state">No flagged facts</div>';
+    }
+  });
+
+  card.querySelector(".btn-delete-fact").addEventListener("click", e => {
+    confirmDelete(e.currentTarget, async () => {
+      await api("DELETE", `/facts/${fact.id}`);
+      card.remove();
+      await refreshFlaggedItem();
+      await renderTopics();
+      if (!document.querySelector(".fact-card")) {
+        document.getElementById("facts-list").innerHTML =
+          '<div class="empty-state">No flagged facts</div>';
+      }
+    });
+  });
+
+  return card;
+}
+
 /* ── PDF Import Modal ────────────────────────────────────── */
 const importState = {
   depth: 'easy',
@@ -1215,9 +1326,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById('import-btn').addEventListener('click', runImport);
 
+  document.getElementById("flagged-facts-item").addEventListener("click", showFlaggedFacts);
+
   // Initial state
   enableFactInput(false);
 
   renderTopics();
   renderCourses();
+  refreshFlaggedItem();
 });
