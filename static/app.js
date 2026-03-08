@@ -679,6 +679,7 @@ async function startQuiz() {
   quizQuestions = [...questions].sort(() => Math.random() - 0.5);
   quizIndex = 0;
   quizScore = 0;
+  document.getElementById("quiz-panel").classList.add("quiz-running");
   showQuestion();
 }
 
@@ -696,6 +697,7 @@ function showQuestion() {
   const progressHeader = `
     <div>
       <div class="quiz-progress">
+        <button class="btn-quiz-back" title="Back to settings">← Settings</button>
         Question ${quizIndex + 1} of ${total}
         <button class="btn-flag" title="Flag this question">⚑ Flag</button>
       </div>
@@ -735,6 +737,7 @@ function showQuestion() {
   }
 
   card.querySelector(".btn-flag").addEventListener("click", () => showFlagForm(card, q.id));
+  card.querySelector(".btn-quiz-back").addEventListener("click", exitQuiz);
   content.innerHTML = "";
   content.appendChild(card);
 }
@@ -850,6 +853,12 @@ function showFlagForm(card, questionId) {
   card.querySelector(".quiz-statement").insertAdjacentElement("afterend", form);
 }
 
+function exitQuiz() {
+  document.getElementById("quiz-panel").classList.remove("quiz-running");
+  document.getElementById("quiz-content").innerHTML =
+    '<div class="quiz-placeholder">Configure settings and press Start Quiz.</div>';
+}
+
 function showQuizResults() {
   const content = document.getElementById("quiz-content");
   const total = quizQuestions.length;
@@ -861,9 +870,13 @@ function showQuizResults() {
     <div class="quiz-results-title">Quiz Complete!</div>
     <div class="quiz-results-score">${quizScore} / ${total}</div>
     <div class="quiz-results-label">${pct}% correct</div>
-    <button class="btn-quiz-restart">Try Again</button>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="btn-quiz-back">← Settings</button>
+      <button class="btn-quiz-restart">Try Again</button>
+    </div>
   `;
   card.querySelector(".btn-quiz-restart").addEventListener("click", startQuiz);
+  card.querySelector(".btn-quiz-back").addEventListener("click", exitQuiz);
 
   content.innerHTML = "";
   content.appendChild(card);

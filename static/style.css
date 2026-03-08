@@ -515,6 +515,9 @@ main {
 #quiz-panel {
   display: flex; flex: 1; overflow: hidden;
 }
+#quiz-panel.quiz-running .quiz-settings-pane {
+  display: none;
+}
 .quiz-settings-pane {
   width: 260px; flex-shrink: 0;
   background: #fff; border-right: 1px solid #e2e8f0;
@@ -689,6 +692,19 @@ main {
   transition: background 0.15s;
 }
 .btn-quiz-restart:hover { background: #3182ce; }
+
+.btn-quiz-back {
+  padding: 6px 14px;
+  background: #edf2f7;
+  color: #4a5568;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-quiz-back:hover { background: #e2e8f0; }
 
 /* ── Multiple choice options ─────────────────────────────── */
 .mc-options { display: flex; flex-direction: column; gap: 8px; }
