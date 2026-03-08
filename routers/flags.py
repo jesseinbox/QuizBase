@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from database import get_db
 from services.question_verify import verify_and_reprocess
+from services.flag_expiry import auto_resolve_expired_flags
 
 router = APIRouter(prefix="/api/questions", tags=["flags"])
 
@@ -54,6 +55,7 @@ async def flag_question(
 
 @router.get("/flags")
 async def list_flags(db=Depends(get_db)):
+    await auto_resolve_expired_flags(db)
     cursor = await db.execute("""
         SELECT fl.id, fl.question_id, fl.reason_type, fl.reason_text,
                fl.verdict, fl.verdict_explanation, fl.created_at,

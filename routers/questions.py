@@ -4,6 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel
 from database import get_db
 from services.question_gen import generate_and_store_mc
+from services.flag_expiry import auto_resolve_expired_flags
 
 router = APIRouter(prefix="/api/questions", tags=["questions"])
 
@@ -41,6 +42,7 @@ async def list_questions(
         conditions.append("f.course_id = ?")
         params.append(course_id)
     if due_only:
+        await auto_resolve_expired_flags(db)
         conditions.append("(p.next_due_at IS NULL OR p.next_due_at <= datetime('now'))")
         conditions.append(
             "NOT EXISTS (SELECT 1 FROM flags fl WHERE fl.question_id = q.id AND fl.verdict = 'pending')"
