@@ -128,17 +128,27 @@ async def record_answer(
     """, (question_id, new_count, due_str, new_count, due_str))
     await db.commit()
 
-    if prev_count == 0:
+    if prev_count == 1:
         fact = await (await db.execute(
             "SELECT content FROM facts WHERE id = ?", (q_row["fact_id"],)
         )).fetchone()
         if fact:
-            # First correct T/F → generate MC
+            # Second correct T/F → generate MC (only if none exists yet for this fact)
             if q_row["type"] == "true_false":
-                background_tasks.add_task(generate_and_store_mc, q_row["fact_id"], fact["content"])
-            # First correct MC → generate SA
+                existing = await (await db.execute(
+                    "SELECT 1 FROM questions WHERE fact_id = ? AND type = 'multiple_choice' LIMIT 1",
+                    (q_row["fact_id"],)
+                )).fetchone()
+                if not existing:
+                    background_tasks.add_task(generate_and_store_mc, q_row["fact_id"], fact["content"])
+            # Second correct MC → generate SA (only if none exists yet for this fact)
             elif q_row["type"] == "multiple_choice":
-                background_tasks.add_task(generate_and_store_sa, q_row["fact_id"], fact["content"])
+                existing = await (await db.execute(
+                    "SELECT 1 FROM questions WHERE fact_id = ? AND type = 'short_answer' LIMIT 1",
+                    (q_row["fact_id"],)
+                )).fetchone()
+                if not existing:
+                    background_tasks.add_task(generate_and_store_sa, q_row["fact_id"], fact["content"])
 
     return {"correct_count": new_count, "next_due_at": due_str, "interval_days": days}
 
