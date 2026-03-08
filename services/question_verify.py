@@ -8,9 +8,9 @@ from database import DB_PATH
 from services.question_gen import _get_client, generate_and_store_mc
 
 TF_VERIFY_PROMPT = """\
-You are reviewing a true/false quiz question that a user flagged as potentially incorrect.
+You are reviewing a true/false quiz question that a user has flagged. Apply strict scrutiny.
 
-Source fact: "{fact}"
+Source fact (the only basis for this question): "{fact}"
 
 Quiz question:
   Statement: "{statement}"
@@ -18,21 +18,27 @@ Quiz question:
 
 User's flag reason: {reason}
 
-A valid question must satisfy ALL of these:
-1. The true/false answer is correct and verifiable
-2. The statement is meaningfully related to the source fact
-3. The statement is clear and unambiguous
+Strict criteria — the question is only valid if ALL of the following are true:
+1. The true/false answer is unambiguously correct
+2. The statement is directly and explicitly grounded in the source fact as written — \
+not merely related to the same general topic
+3. The statement does not introduce concepts, details, or specifics that go beyond \
+what is stated in the source fact
+4. The statement is clear and unambiguous
 
-Use web search if you need to verify factual accuracy.
+When in doubt, rule invalid. The user's flag is a strong signal — do not keep a \
+question unless you are confident it passes all criteria above.
+
+Use web search only to verify factual accuracy, not to broaden the scope of the fact.
 
 Respond with ONLY a JSON object, no other text:
 {{"valid": true, "explanation": "..."}}
 """
 
 MC_VERIFY_PROMPT = """\
-You are reviewing a multiple choice quiz question that a user flagged as potentially incorrect.
+You are reviewing a multiple choice quiz question that a user has flagged. Apply strict scrutiny.
 
-Source fact: "{fact}"
+Source fact (the only basis for this question): "{fact}"
 
 Quiz question: "{statement}"
 Options:
@@ -40,14 +46,18 @@ Options:
 
 User's flag reason: {reason}
 
-A valid question must satisfy ALL of these:
+Strict criteria — the question is only valid if ALL of the following are true:
 1. Exactly one option is unambiguously correct
-2. The correct answer is actually correct and verifiable
-3. Distractors are plausible but clearly wrong
-4. The question is meaningfully related to the source fact
+2. The correct answer is directly and explicitly grounded in the source fact as written
+3. The question does not introduce concepts, details, or specifics that go beyond \
+what is stated in the source fact
+4. Distractors are plausible but clearly wrong
 5. The question is clear and unambiguous
 
-Use web search if you need to verify factual accuracy.
+When in doubt, rule invalid. The user's flag is a strong signal — do not keep a \
+question unless you are confident it passes all criteria above.
+
+Use web search only to verify factual accuracy, not to broaden the scope of the fact.
 
 Respond with ONLY a JSON object, no other text:
 {{"valid": true, "explanation": "..."}}
