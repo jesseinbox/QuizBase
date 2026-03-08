@@ -171,11 +171,13 @@ async def verify_and_reprocess(question_id: int, flag_id: int) -> None:
         result = json.loads(_extract_text(verify_resp))
         valid = bool(result.get("valid", True))
 
+        explanation = result.get("explanation", "")
+
         async with aiosqlite.connect(DB_PATH) as db:
             await db.execute("PRAGMA foreign_keys = ON")
             await db.execute(
-                "UPDATE flags SET verdict = ? WHERE id = ?",
-                ("dismissed" if valid else "confirmed", flag_id),
+                "UPDATE flags SET verdict = ?, verdict_explanation = ? WHERE id = ?",
+                ("dismissed" if valid else "confirmed", explanation, flag_id),
             )
 
             if not valid:

@@ -336,7 +336,145 @@ function enterQuestionsMode() {
   document.getElementById("btn-questions").classList.add("active");
   document.getElementById("btn-study").classList.remove("active");
   document.getElementById("btn-quiz").classList.remove("active");
+  showQuestionsTab();
+}
+
+function showQuestionsTab() {
+  document.getElementById("questions-view").classList.remove("hidden");
+  document.getElementById("flagged-view").classList.add("hidden");
+  document.getElementById("qtab-questions").classList.add("active");
+  document.getElementById("qtab-flagged").classList.remove("active");
   renderQuestionsSidebar();
+}
+
+function showFlaggedTab() {
+  document.getElementById("questions-view").classList.add("hidden");
+  document.getElementById("flagged-view").classList.remove("hidden");
+  document.getElementById("qtab-flagged").classList.add("active");
+  document.getElementById("qtab-questions").classList.remove("active");
+  loadFlaggedQuestions();
+}
+
+async function loadFlaggedQuestions() {
+  const content = document.getElementById("flagged-content");
+  content.innerHTML = '<div class="quiz-placeholder">Loading…</div>';
+
+  const flags = await api("GET", "/questions/flags");
+
+  // Update count badge
+  const pending = flags.filter(f => f.verdict === "pending").length;
+  const badge = document.getElementById("flagged-count");
+  if (pending > 0) {
+    badge.textContent = pending;
+    badge.classList.remove("hidden");
+  } else {
+    badge.classList.add("hidden");
+  }
+
+  content.innerHTML = "";
+
+  if (!flags.length) {
+    content.innerHTML = '<div class="quiz-placeholder">No flagged questions.</div>';
+    return;
+  }
+
+  for (const flag of flags) {
+    content.appendChild(buildFlagCard(flag));
+  }
+}
+
+function buildFlagCard(flag) {
+  const card = document.createElement("div");
+  card.className = "flag-review-card";
+  card.dataset.flagId = flag.id;
+
+  const verdictLabel = { pending: "Under Review", dismissed: "AI: Valid", confirmed: "AI: Removed" };
+  const verdictClass = flag.verdict;
+
+  const isMC = flag.type === "multiple_choice";
+  let questionHtml = "";
+  if (isMC) {
+    const letters = "ABCD";
+    const optsHtml = (flag.options || []).map((opt, i) =>
+      `<div class="flag-mc-opt${opt.is_correct ? " correct" : ""}">${letters[i]}. ${escHtml(opt.option_text)}${opt.is_correct ? " ✓" : ""}</div>`
+    ).join("");
+    questionHtml = `
+      <div class="flag-review-top">
+        <span class="question-badge mc">MC</span>
+        <span class="question-statement">${escHtml(flag.statement)}</span>
+        <span class="flag-verdict-badge ${verdictClass}">${verdictLabel[flag.verdict] || flag.verdict}</span>
+      </div>
+      <div class="flag-mc-options">${optsHtml}</div>
+    `;
+  } else {
+    const tf = Boolean(flag.is_true);
+    questionHtml = `
+      <div class="flag-review-top">
+        <span class="question-badge ${tf ? 'true' : 'false'}">${tf ? "True" : "False"}</span>
+        <span class="question-statement">${escHtml(flag.statement)}</span>
+        <span class="flag-verdict-badge ${verdictClass}">${verdictLabel[flag.verdict] || flag.verdict}</span>
+      </div>
+    `;
+  }
+
+  const reasonHtml = `
+    <div class="flag-reason-row">
+      🚩 <strong>${escHtml(flag.reason_label)}</strong>
+      ${flag.reason_text ? `— ${escHtml(flag.reason_text)}` : ""}
+    </div>
+  `;
+
+  const aiHtml = flag.verdict_explanation
+    ? `<div class="flag-ai-explanation"><strong>AI Review:</strong> ${escHtml(flag.verdict_explanation)}</div>`
+    : (flag.verdict === "pending" ? `<div class="flag-ai-explanation">AI review in progress…</div>` : "");
+
+  const sourceHtml = `
+    <div class="flag-source-fact">
+      <div class="fact-topic">Source fact · ${escHtml(flag.topic_name)}</div>
+      ${escHtml(flag.fact_content)}
+    </div>
+  `;
+
+  card.innerHTML = questionHtml + reasonHtml + aiHtml + sourceHtml + `<div class="flag-override-row"></div>`;
+
+  const overrideRow = card.querySelector(".flag-override-row");
+
+  if (flag.verdict !== "confirmed") {
+    const keepBtn = document.createElement("button");
+    keepBtn.className = "btn-override-keep";
+    keepBtn.textContent = flag.verdict === "dismissed" ? "Keep (confirm AI)" : "Keep Question";
+    keepBtn.addEventListener("click", async () => {
+      await api("POST", `/questions/flags/${flag.id}/override`, { action: "keep" });
+      card.remove();
+      updateFlaggedCount();
+    });
+    overrideRow.appendChild(keepBtn);
+  }
+
+  const removeBtn = document.createElement("button");
+  removeBtn.className = "btn-override-remove";
+  removeBtn.textContent = "Remove Question";
+  removeBtn.addEventListener("click", async () => {
+    await api("POST", `/questions/flags/${flag.id}/override`, { action: "remove" });
+    card.remove();
+    updateFlaggedCount();
+  });
+  overrideRow.appendChild(removeBtn);
+
+  return card;
+}
+
+function updateFlaggedCount() {
+  const remaining = document.querySelectorAll(".flag-review-card").length;
+  const badge = document.getElementById("flagged-count");
+  if (remaining > 0) {
+    badge.textContent = remaining;
+    badge.classList.remove("hidden");
+  } else {
+    badge.classList.add("hidden");
+    document.getElementById("flagged-content").innerHTML =
+      '<div class="quiz-placeholder">No flagged questions.</div>';
+  }
 }
 
 async function renderQuestionsSidebar() {
@@ -755,6 +893,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btn-study").addEventListener("click", enterStudyMode);
   document.getElementById("btn-questions").addEventListener("click", enterQuestionsMode);
   document.getElementById("btn-quiz").addEventListener("click", enterQuizMode);
+
+  // Questions sub-tabs
+  document.getElementById("qtab-questions").addEventListener("click", showQuestionsTab);
+  document.getElementById("qtab-flagged").addEventListener("click", showFlaggedTab);
 
   // Quiz settings
   document.getElementById("quiz-cat-ctrl").addEventListener("click", e => {

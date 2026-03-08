@@ -62,13 +62,22 @@
 </main>
 
 <div id="questions-panel" class="hidden">
-  <aside class="questions-sidebar">
-    <div class="qs-label">Topic</div>
-    <div class="questions-topic-list" id="questions-topic-list"></div>
-  </aside>
-  <section class="questions-content" id="questions-content">
-    <div class="quiz-placeholder">Select a topic to see its questions.</div>
-  </section>
+  <div class="questions-tab-bar">
+    <button class="qtab-btn active" id="qtab-questions">Questions</button>
+    <button class="qtab-btn" id="qtab-flagged">Flagged <span id="flagged-count" class="hidden"></span></button>
+  </div>
+  <div id="questions-view">
+    <aside class="questions-sidebar">
+      <div class="qs-label">Topic</div>
+      <div class="questions-topic-list" id="questions-topic-list"></div>
+    </aside>
+    <section class="questions-content" id="questions-content">
+      <div class="quiz-placeholder">Select a topic to see its questions.</div>
+    </section>
+  </div>
+  <div id="flagged-view" class="hidden">
+    <section class="flagged-content" id="flagged-content"></section>
+  </div>
 </div>
 
 <div id="quiz-panel" class="hidden">

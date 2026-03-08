@@ -88,6 +88,11 @@ async def init_db():
             )
         except Exception:
             pass
+        # Add verdict_explanation to flags (no-op if already present)
+        try:
+            await db.execute("ALTER TABLE flags ADD COLUMN verdict_explanation TEXT")
+        except Exception:
+            pass
         await db.execute(CREATE_FLAGS)
         await db.commit()
 
