@@ -17,7 +17,7 @@ async def extract_from_pdf(
     file: UploadFile = File(...),
     max_facts: int = Form(10),
     focus: str = Form("general"),
-    depth: str = Form("broad"),
+    depth: str = Form("easy"),
     start_page: int = Form(1),
     end_page: int = Form(20),
     avoid_duplicates: bool = Form(False),

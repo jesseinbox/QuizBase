@@ -103,7 +103,7 @@ async def extract_facts(
     focus_label = FOCUS_LABELS.get(focus, FOCUS_LABELS["general"])
     depth_label = {"easy": "Easy", "medium": "Medium", "hard": "Hard"}.get(depth, "Medium")
     focus_instruction = FOCUS_INSTRUCTIONS.get(focus, FOCUS_INSTRUCTIONS["general"])
-    depth_instruction = DEPTH_INSTRUCTIONS.get(depth, DEPTH_INSTRUCTIONS["broad"])
+    depth_instruction = DEPTH_INSTRUCTIONS.get(depth, DEPTH_INSTRUCTIONS["easy"])
 
     if existing_facts:
         existing_str = "\n".join(f"  - {f}" for f in existing_facts[:40])
