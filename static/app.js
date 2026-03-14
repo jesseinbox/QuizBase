@@ -7,7 +7,8 @@ const state = {
 const quizState = {
   category: 'all',   // 'all' | 'topic' | 'course'
   filterId: null,
-  type: 'true-false',
+  types: new Set(['true_false', 'multiple_choice', 'short_answer']),
+  status: 'due',     // 'due' | 'new' | 'all'
 };
 
 /* ── API helpers ─────────────────────────────────────────── */
@@ -678,9 +679,21 @@ function selectQuizCategory(value) {
   populateQuizFilterSelect();
 }
 
-function selectQuizType(value) {
-  quizState.type = value;
+function toggleQuizType(value) {
+  if (quizState.types.has(value)) {
+    if (quizState.types.size === 1) return; // keep at least one selected
+    quizState.types.delete(value);
+  } else {
+    quizState.types.add(value);
+  }
   document.querySelectorAll("#quiz-type-ctrl .seg-btn").forEach(btn => {
+    btn.classList.toggle("active", quizState.types.has(btn.dataset.value));
+  });
+}
+
+function selectQuizStatus(value) {
+  quizState.status = value;
+  document.querySelectorAll("#quiz-status-ctrl .seg-btn").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.value === value);
   });
 }
@@ -696,7 +709,8 @@ async function startQuiz() {
     params.set('course_id', quizState.filterId);
   }
 
-  params.set('due_only', 'true');
+  params.set('status', quizState.status);
+  params.set('types', [...quizState.types].join(','));
 
   let questions;
   try {
@@ -1281,7 +1295,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("quiz-type-ctrl").addEventListener("click", e => {
     const btn = e.target.closest(".seg-btn");
-    if (btn) selectQuizType(btn.dataset.value);
+    if (btn) toggleQuizType(btn.dataset.value);
+  });
+  document.getElementById("quiz-status-ctrl").addEventListener("click", e => {
+    const btn = e.target.closest(".seg-btn");
+    if (btn) selectQuizStatus(btn.dataset.value);
   });
   document.getElementById("start-quiz-btn").addEventListener("click", startQuiz);
   document.getElementById("quiz-filter-select").addEventListener("change", e => {

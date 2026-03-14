@@ -29,6 +29,8 @@ async def list_questions(
     course_id: Optional[int] = Query(None),
     fact_id: Optional[int] = Query(None),
     due_only: bool = Query(False),
+    types: Optional[str] = Query(None),   # comma-separated: true_false,multiple_choice,short_answer
+    status: str = Query("all"),            # all | due | new
     db=Depends(get_db),
 ):
     conditions = []
@@ -42,12 +44,22 @@ async def list_questions(
     if course_id is not None:
         conditions.append("f.course_id = ?")
         params.append(course_id)
-    if due_only:
+    if types:
+        type_list = [t.strip() for t in types.split(",") if t.strip()]
+        if type_list:
+            placeholders = ",".join("?" * len(type_list))
+            conditions.append(f"COALESCE(q.type, 'true_false') IN ({placeholders})")
+            params.extend(type_list)
+    # status overrides due_only if provided explicitly
+    effective_status = status if status != "all" else ("due" if due_only else "all")
+    if effective_status == "due":
         await auto_resolve_expired_flags(db)
         conditions.append("(p.next_due_at IS NULL OR p.next_due_at <= datetime('now'))")
         conditions.append(
             "NOT EXISTS (SELECT 1 FROM flags fl WHERE fl.question_id = q.id AND fl.verdict = 'pending')"
         )
+    elif effective_status == "new":
+        conditions.append("p.question_id IS NULL")
     where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     cursor = await db.execute(f"""
         SELECT q.id, q.fact_id, q.statement, q.is_true,
