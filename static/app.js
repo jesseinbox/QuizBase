@@ -748,7 +748,7 @@ function showQuestion() {
     <div>
       <div class="quiz-progress">
         <button class="btn-quiz-back" title="Back to settings">← Settings</button>
-        Question ${quizIndex + 1} of ${total}
+        ${quizScore} correct
         <button class="btn-flag" title="Flag this question">⚑ Flag</button>
       </div>
       <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:${pct}%"></div></div>
@@ -795,7 +795,7 @@ function showQuestion() {
       </div>
     `;
     card.querySelectorAll(".btn-tf").forEach(btn => {
-      btn.addEventListener("click", () => answerQuestion(btn.dataset.answer === "true", isTrue, q.id));
+      btn.addEventListener("click", () => answerQuestion(btn.dataset.answer === "true", isTrue, q));
     });
   }
 
@@ -824,14 +824,32 @@ async function answerMC(selectedBtn, card, q) {
   feedback.textContent = correct ? "Correct!" : "Wrong.";
   card.querySelector(".mc-options").insertAdjacentElement("afterend", feedback);
 
+  if (!correct) {
+    const seeFactBtn = document.createElement("button");
+    seeFactBtn.className = "btn-see-fact";
+    seeFactBtn.textContent = "See Fact";
+    seeFactBtn.addEventListener("click", () => {
+      const factDiv = document.createElement("div");
+      factDiv.className = "fact-reveal";
+      factDiv.innerHTML = `<div class="fact-reveal-label">Related Fact</div>${escHtml(q.fact_content)}`;
+      seeFactBtn.replaceWith(factDiv);
+    });
+    card.appendChild(seeFactBtn);
+  }
+
   const nextBtn = document.createElement("button");
   nextBtn.className = "btn-quiz-next";
   nextBtn.textContent = quizIndex + 1 < quizQuestions.length ? "Next →" : "See Results";
-  nextBtn.addEventListener("click", () => { quizIndex++; showQuestion(); });
+  if (correct) {
+    const autoTimer = setTimeout(() => { quizIndex++; showQuestion(); }, 3000);
+    nextBtn.addEventListener("click", () => { clearTimeout(autoTimer); quizIndex++; showQuestion(); });
+  } else {
+    nextBtn.addEventListener("click", () => { quizIndex++; showQuestion(); });
+  }
   card.appendChild(nextBtn);
 }
 
-async function answerQuestion(userSaysTrue, isTrue, questionId) {
+async function answerQuestion(userSaysTrue, isTrue, q) {
   const correct = userSaysTrue === isTrue;
   if (correct) quizScore++;
 
@@ -848,7 +866,7 @@ async function answerQuestion(userSaysTrue, isTrue, questionId) {
   feedback.className = "quiz-feedback " + (correct ? "correct" : "wrong");
 
   if (correct) {
-    try { await api("POST", `/questions/${questionId}/answer`, { correct: true }); } catch (_) {}
+    try { await api("POST", `/questions/${q.id}/answer`, { correct: true }); } catch (_) {}
   }
 
   feedback.textContent = correct
@@ -856,10 +874,28 @@ async function answerQuestion(userSaysTrue, isTrue, questionId) {
     : `Wrong. This statement is ${isTrue ? "TRUE" : "FALSE"}.`;
   card.querySelector(".quiz-answer-row").insertAdjacentElement("afterend", feedback);
 
+  if (!correct) {
+    const seeFactBtn = document.createElement("button");
+    seeFactBtn.className = "btn-see-fact";
+    seeFactBtn.textContent = "See Fact";
+    seeFactBtn.addEventListener("click", () => {
+      const factDiv = document.createElement("div");
+      factDiv.className = "fact-reveal";
+      factDiv.innerHTML = `<div class="fact-reveal-label">Related Fact</div>${escHtml(q.fact_content)}`;
+      seeFactBtn.replaceWith(factDiv);
+    });
+    card.appendChild(seeFactBtn);
+  }
+
   const nextBtn = document.createElement("button");
   nextBtn.className = "btn-quiz-next";
   nextBtn.textContent = quizIndex + 1 < quizQuestions.length ? "Next →" : "See Results";
-  nextBtn.addEventListener("click", () => { quizIndex++; showQuestion(); });
+  if (correct) {
+    const autoTimer = setTimeout(() => { quizIndex++; showQuestion(); }, 3000);
+    nextBtn.addEventListener("click", () => { clearTimeout(autoTimer); quizIndex++; showQuestion(); });
+  } else {
+    nextBtn.addEventListener("click", () => { quizIndex++; showQuestion(); });
+  }
   card.appendChild(nextBtn);
 }
 
@@ -890,10 +926,28 @@ async function answerSA(card, q) {
   feedback.textContent = result.feedback;
   submitBtn.replaceWith(feedback);
 
+  if (!result.correct) {
+    const seeFactBtn = document.createElement("button");
+    seeFactBtn.className = "btn-see-fact";
+    seeFactBtn.textContent = "See Fact";
+    seeFactBtn.addEventListener("click", () => {
+      const factDiv = document.createElement("div");
+      factDiv.className = "fact-reveal";
+      factDiv.innerHTML = `<div class="fact-reveal-label">Related Fact</div>${escHtml(q.fact_content)}`;
+      seeFactBtn.replaceWith(factDiv);
+    });
+    card.appendChild(seeFactBtn);
+  }
+
   const nextBtn = document.createElement("button");
   nextBtn.className = "btn-quiz-next";
   nextBtn.textContent = quizIndex + 1 < quizQuestions.length ? "Next →" : "See Results";
-  nextBtn.addEventListener("click", () => { quizIndex++; showQuestion(); });
+  if (result.correct) {
+    const autoTimer = setTimeout(() => { quizIndex++; showQuestion(); }, 3000);
+    nextBtn.addEventListener("click", () => { clearTimeout(autoTimer); quizIndex++; showQuestion(); });
+  } else {
+    nextBtn.addEventListener("click", () => { quizIndex++; showQuestion(); });
+  }
   card.appendChild(nextBtn);
 }
 
