@@ -21,12 +21,12 @@
 
 <main>
 
-  <!-- ── Panel 1: Topics ──────────────────────────────── -->
+  <!-- ── Panel 1: Courses ──────────────────────────────── -->
   <section class="panel" id="panel-topics">
     <div class="panel-header">
-      <h2>Topics</h2>
+      <h2>Courses</h2>
       <div class="add-form">
-        <input type="text" id="new-topic-name" placeholder="New topic…" maxlength="120" />
+        <input type="text" id="new-topic-name" placeholder="New course…" maxlength="120" />
         <button class="btn btn-primary" id="add-topic-btn">+</button>
       </div>
     </div>
@@ -37,12 +37,12 @@
     </div>
   </section>
 
-  <!-- ── Panel 2: Courses ──────────────────────────────── -->
+  <!-- ── Panel 2: Topics ──────────────────────────────── -->
   <section class="panel" id="panel-courses">
     <div class="panel-header">
-      <h2>Courses <span class="panel-subtitle">optional tag</span></h2>
+      <h2>Topics <span class="panel-subtitle">optional tag</span></h2>
       <div class="add-form">
-        <input type="text" id="new-course-name" placeholder="New course…" maxlength="120" />
+        <input type="text" id="new-course-name" placeholder="New topic…" maxlength="120" />
         <button class="btn btn-primary" id="add-course-btn">+</button>
       </div>
     </div>
@@ -59,7 +59,7 @@
       </div>
     </div>
     <div class="facts-list" id="facts-list">
-      <div class="empty-state">Select a topic first</div>
+      <div class="empty-state">Select a course first</div>
     </div>
   </section>
 
@@ -72,11 +72,11 @@
   </div>
   <div id="questions-view">
     <aside class="questions-sidebar">
-      <div class="qs-label">Topic</div>
+      <div class="qs-label">Course</div>
       <div class="questions-topic-list" id="questions-topic-list"></div>
     </aside>
     <section class="questions-content" id="questions-content">
-      <div class="quiz-placeholder">Select a topic to see its questions.</div>
+      <div class="quiz-placeholder">Select a course to see its questions.</div>
     </section>
   </div>
   <div id="flagged-view" class="hidden">
@@ -90,8 +90,8 @@
       <div class="qs-label">Category</div>
       <div class="seg-ctrl" id="quiz-cat-ctrl">
         <button class="seg-btn active" data-value="all">All</button>
-        <button class="seg-btn" data-value="topic">Topic</button>
-        <button class="seg-btn" data-value="course">Course</button>
+        <button class="seg-btn" data-value="topic">Course</button>
+        <button class="seg-btn" data-value="course">Topic</button>
       </div>
       <select id="quiz-filter-select" class="hidden quiz-select"></select>
     </div>
@@ -142,13 +142,13 @@
         <div class="import-label">Destination</div>
         <div class="import-row">
           <div class="import-field">
-            <label class="import-field-label">Topic</label>
+            <label class="import-field-label">Course</label>
             <select id="import-topic-select" class="import-select">
-              <option value="">— select topic —</option>
+              <option value="">— select course —</option>
             </select>
           </div>
           <div class="import-field">
-            <label class="import-field-label">Course <span class="panel-subtitle">optional</span></label>
+            <label class="import-field-label">Topic <span class="panel-subtitle">optional</span></label>
             <select id="import-course-select" class="import-select">
               <option value="">None</option>
             </select>

@@ -694,7 +694,8 @@ function toggleQuizType(value) {
 function selectQuizStatus(value) {
   quizState.status = value;
   document.querySelectorAll("#quiz-status-ctrl .seg-btn").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.value === value);
+    btn.classList.remove("active");
+    if (btn.dataset.value === value) btn.classList.add("active");
   });
 }
 
@@ -1101,7 +1102,7 @@ async function populateImportDropdowns() {
     api('GET', '/courses'),
   ]);
 
-  topicSel.innerHTML = '<option value="">— select topic —</option>';
+  topicSel.innerHTML = '<option value="">— select course —</option>';
   for (const t of topics) {
     const opt = document.createElement('option');
     opt.value = t.id;
