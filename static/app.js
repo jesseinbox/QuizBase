@@ -1130,30 +1130,6 @@ const importState = {
   selectedFile: null,
 };
 
-async function runDuplicateScan() {
-  const btn = document.getElementById('dupe-scan-btn');
-  const original = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Scanning…';
-  try {
-    const result = await api('POST', '/facts/run-duplicate-scan');
-    const { facts_flagged, topics_scanned } = result;
-    if (facts_flagged > 0) {
-      btn.textContent = `${facts_flagged} duplicate${facts_flagged !== 1 ? 's' : ''} found`;
-      await refreshFlaggedItem();
-    } else {
-      btn.textContent = 'No dupes found';
-    }
-  } catch (err) {
-    btn.textContent = 'Error';
-    console.error('Duplicate scan failed:', err);
-  }
-  setTimeout(() => {
-    btn.textContent = original;
-    btn.disabled = false;
-  }, 3000);
-}
-
 function openImportModal() {
   const modal = document.getElementById('import-modal');
   modal.classList.remove('hidden');
@@ -1384,9 +1360,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("quiz-filter-select").addEventListener("change", e => {
     quizState.filterId = e.target.value ? Number(e.target.value) : null;
   });
-
-  // Duplicate scan
-  document.getElementById('dupe-scan-btn').addEventListener('click', runDuplicateScan);
 
   // PDF Import Modal
   document.getElementById('import-pdf-btn').addEventListener('click', openImportModal);

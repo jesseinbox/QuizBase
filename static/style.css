@@ -825,18 +825,6 @@ main {
 }
 .btn-import-pdf:hover { background: #bee3f8; }
 
-.btn-dupe-scan {
-  font-size: 0.68rem; font-weight: 700;
-  padding: 3px 9px;
-  background: #f0fff4; color: #276749;
-  border: 1px solid #9ae6b4; border-radius: 5px;
-  cursor: pointer; margin-left: 6px;
-  transition: background 0.15s, opacity 0.15s;
-  text-transform: uppercase; letter-spacing: 0.04em;
-}
-.btn-dupe-scan:hover:not(:disabled) { background: #c6f6d5; }
-.btn-dupe-scan:disabled { opacity: 0.5; cursor: default; }
-
 /* ── Modal overlay ───────────────────────────────────────── */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 1000;
