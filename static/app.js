@@ -699,6 +699,28 @@ function selectQuizStatus(value) {
   });
 }
 
+function interleaveByTopic(questions) {
+  // Group by topic_id (what the user sees as "course")
+  const groups = new Map();
+  for (const q of questions) {
+    if (!groups.has(q.topic_id)) groups.set(q.topic_id, []);
+    groups.get(q.topic_id).push(q);
+  }
+  if (groups.size <= 1) return questions;
+
+  // Sort groups largest-first so the biggest course spreads out most evenly
+  const arrays = [...groups.values()].sort((a, b) => b.length - a.length);
+
+  // Round-robin: pick one from each group in turn
+  const result = [];
+  while (arrays.some(a => a.length > 0)) {
+    for (const arr of arrays) {
+      if (arr.length > 0) result.push(arr.shift());
+    }
+  }
+  return result;
+}
+
 async function startQuiz() {
   const content = document.getElementById("quiz-content");
   content.innerHTML = '<div class="quiz-placeholder">Loading…</div>';
@@ -726,7 +748,7 @@ async function startQuiz() {
     return;
   }
 
-  quizQuestions = [...questions].sort(() => Math.random() - 0.5);
+  quizQuestions = interleaveByTopic([...questions].sort(() => Math.random() - 0.5));
   quizIndex = 0;
   quizScore = 0;
   document.getElementById("quiz-panel").classList.add("quiz-running");
