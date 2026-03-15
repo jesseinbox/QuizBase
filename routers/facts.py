@@ -4,7 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from database import get_db
 from models import FactUpdate
 from services.fact_check import check_and_flag_fact
-from services.fact_duplicate import check_and_flag_duplicate
+from services.fact_duplicate import check_and_flag_duplicate, bulk_scan_topic
 
 router = APIRouter(prefix="/api/facts", tags=["facts"])
 
@@ -33,6 +33,45 @@ async def list_all_facts(
     where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
     cursor = await db.execute(f"{FACT_SELECT} {where} ORDER BY f.id", params)
     return [dict(r) for r in await cursor.fetchall()]
+
+
+@router.post("/run-duplicate-scan")
+async def run_duplicate_scan(db=Depends(get_db)):
+    """Scan all facts across all topics for duplicates in bulk."""
+    # Fetch all unflagged facts grouped by topic
+    cursor = await db.execute(
+        "SELECT id, topic_id, content FROM facts WHERE accuracy_flag IS NULL ORDER BY topic_id, id"
+    )
+    rows = [dict(r) for r in await cursor.fetchall()]
+
+    # Group by topic
+    by_topic: dict[int, list[dict]] = {}
+    for row in rows:
+        by_topic.setdefault(row["topic_id"], []).append({"id": row["id"], "content": row["content"]})
+
+    topics_scanned = 0
+    facts_flagged = 0
+
+    for topic_id, facts in by_topic.items():
+        if len(facts) < 2:
+            continue
+        try:
+            flagged_pairs = await bulk_scan_topic(topic_id, facts)
+        except Exception as exc:
+            print(f"[duplicate-scan] topic {topic_id} failed: {exc}")
+            continue
+
+        topics_scanned += 1
+        for fact_id, matching_content in flagged_pairs:
+            flag_msg = f'Possible duplicate of: "{matching_content}"'
+            await db.execute(
+                "UPDATE facts SET accuracy_flag = ? WHERE id = ? AND accuracy_flag IS NULL",
+                (flag_msg, fact_id),
+            )
+            facts_flagged += 1
+
+    await db.commit()
+    return {"topics_scanned": topics_scanned, "facts_flagged": facts_flagged}
 
 
 @router.get("/flagged")
