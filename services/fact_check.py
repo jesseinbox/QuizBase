@@ -43,7 +43,7 @@ async def check_and_flag_fact(fact_id: int, fact_content: str) -> None:
     try:
         client = _get_client()
         response = await client.messages.create(
-            model="claude-haiku-4-5-20251001",
+            model="claude-sonnet-4-6",
             max_tokens=256,
             tools=[{"type": "web_search_20250305", "name": "web_search"}],
             messages=[{"role": "user", "content": FACT_CHECK_PROMPT.format(fact=fact_content)}],
@@ -62,6 +62,13 @@ async def check_and_flag_fact(fact_id: int, fact_content: str) -> None:
         if not result.get("accurate", True):
             concern = result.get("concern") or "Flagged as potentially inaccurate"
             async with aiosqlite.connect(DB_PATH) as db:
+                db.row_factory = aiosqlite.Row
+                # Don't overwrite a duplicate flag set by the earlier duplicate check
+                row = await (await db.execute(
+                    "SELECT accuracy_flag FROM facts WHERE id = ?", (fact_id,)
+                )).fetchone()
+                if row and row["accuracy_flag"]:
+                    return
                 await db.execute(
                     "UPDATE facts SET accuracy_flag = ? WHERE id = ?",
                     (concern, fact_id),

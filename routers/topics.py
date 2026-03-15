@@ -3,6 +3,7 @@ from database import get_db
 from models import TopicCreate, FactCreate
 from services.question_gen import generate_and_store
 from services.fact_check import check_and_flag_fact
+from services.fact_duplicate import check_and_flag_duplicate
 
 router = APIRouter(prefix="/api/topics", tags=["topics"])
 
@@ -94,5 +95,6 @@ async def create_fact(topic_id: int, body: FactCreate, background_tasks: Backgro
     """, (fact_id,))).fetchone()
     fact = dict(row)
     background_tasks.add_task(generate_and_store, fact_id, fact["content"])
+    background_tasks.add_task(check_and_flag_duplicate, fact_id, fact["content"], topic_id)
     background_tasks.add_task(check_and_flag_fact, fact_id, fact["content"])
     return fact

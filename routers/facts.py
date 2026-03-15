@@ -4,6 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from database import get_db
 from models import FactUpdate
 from services.fact_check import check_and_flag_fact
+from services.fact_duplicate import check_and_flag_duplicate
 
 router = APIRouter(prefix="/api/facts", tags=["facts"])
 
@@ -71,6 +72,7 @@ async def update_fact(
         raise HTTPException(status_code=404, detail="Fact not found")
     row = await (await db.execute(f"{FACT_SELECT} WHERE f.id = ?", (fact_id,))).fetchone()
     fact = dict(row)
+    background_tasks.add_task(check_and_flag_duplicate, fact_id, content, fact["topic_id"])
     background_tasks.add_task(check_and_flag_fact, fact_id, content)
     return fact
 
